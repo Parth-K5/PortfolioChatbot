@@ -15,11 +15,14 @@ queryMap = {}
 
 @app.route("/")
 def home():
-    print(f"Connected: {request.remote_addr}")
+
+    client = f"{request.remote_addr}:{request.environ.get('REMOTE_PORT')}"
+
+    print(f"Connected: {client}")
     #is_online = True
 
-    if str(request.remote_addr) not in queryMap:
-        queryMap[str(request.remote_addr)] = 0
+    if str(client) not in queryMap:
+        queryMap[client] = 0
     return render_template('index.html')
 
 MAX_lIMIT_TEXT = 50
@@ -27,6 +30,8 @@ MAX_QUERY_LIMIT = 3
 
 @app.route("/get", methods=['GET', 'POST'])
 def chat():
+
+    client = f"{request.remote_addr}:{request.environ.get('REMOTE_PORT')}"
 
     message = request.form["msg"]
 
@@ -48,8 +53,8 @@ def chat():
     try:
         response = generation.gpt_gen(prompt, MAX_lIMIT_TEXT)
 
-        queryMap[str(request.remote_addr)] += 1
-        print(f"**** {request.remote_addr} has used up {queryMap[(str(request.remote_addr))]}/{MAX_QUERY_LIMIT} queries ****")
+        queryMap[client] += 1
+        print(f"**** {client} has used up {queryMap[client]}/{MAX_QUERY_LIMIT} queries ****")
         
         return response
     except:
