@@ -22,7 +22,13 @@
 							<div class="d-flex bd-highlight">
 								<div class="img_cont">
 									<img src="https://st2.depositphotos.com/1006536/11500/v/950/depositphotos_115007176-stock-illustration-colorful-minimal-cloud-computing-digital.jpg" class="rounded-circle user_img">
-									<span class="online_icon"></span>
+									<!--
+									{% if online_status %}
+										<span id="activityStatus" class="online_icon"></span>
+									{% else %}
+										<span id="activityStatus" class="offline_icon"></span>
+									{% endif %}-->
+									<span class="online_icon" id="activityStatus"></span>
 								</div>
 								<div class="user_info justify-content-center">
 									<span class="justify-content-center h-100">ChatBot</span>

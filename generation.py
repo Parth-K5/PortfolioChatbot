@@ -15,7 +15,7 @@ def gpt_gen(prompt, allocatedTokens):
         messages=[{"role": "user", "content": prompt}],
         max_tokens=allocatedTokens
     )
-    print(response.choices[0].message.content)
+    print(f"GPT ----> {response.choices[0].message.content}")
     #print(response.choices[0].message.content.strip())
     return response.choices[0].message.content.strip()
 
