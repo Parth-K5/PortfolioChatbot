@@ -24,3 +24,15 @@ $(document).ready(function() {
         event.preventDefault();
     });
 });
+
+$(document).ready(function() {
+    var max = 50;
+    $('#characters-feedback').html(0 + '/50');
+
+    $('#text').keyup(function() {
+        var text_length = $('#text').val().length;
+        var text_remaining = max - text_length;
+
+        $('#characters-feedback').html(text_remaining + '/50');
+    });
+});
