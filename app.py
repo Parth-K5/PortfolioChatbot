@@ -1,7 +1,8 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, session
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import torch
 import logging
+import uuid
 import generation
 
 tokenizer = AutoTokenizer.from_pretrained("microsoft/DialoGPT-small")
@@ -11,7 +12,17 @@ logging.getLogger('transformers').setLevel(logging.ERROR)
 app = Flask(__name__)
 
 queryMap = {}
+connMap = {}
 #is_online = True
+
+@app.route("/")
+def get_conn_id():
+    if 'client_id' not in session:
+        session['client_id'] = str(uuid.uuid64())
+        connMap[session['client_id']] = request.remote_addr
+
+    print(f"Client ID: {session['client_id']} - Connected clients: {connMap}")
+    return f"Client ID: {session['client_id']} - Connected clients: {connMap}"
 
 @app.route("/")
 def home():
