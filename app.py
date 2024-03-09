@@ -12,6 +12,7 @@ model = AutoModelForCausalLM.from_pretrained("microsoft/DialoGPT-small")
 logging.getLogger('transformers').setLevel(logging.ERROR)
 
 app = Flask(__name__)
+app.secret_key = "parthk5101x"
 
 MAX_LIMIT_TEXT = 50
 MAX_QUERY_LIMIT = 3
@@ -53,13 +54,15 @@ def chat():
     MAX_LIMIT_TEXT = MAX_LIMIT_TEXT
     MAX_QUERY_LIMIT = MAX_QUERY_LIMIT
 
+
+
     client = f"{request.remote_addr}"
     #client = f"{request.remote_addr}:{request.environ.get('REMOTE_PORT')}"
 
     message = request.form["msg"]
 
-    print(f"QueryMap: {queryMap}")
-
+    #print(f"QueryMap: {queryMap}")
+    print("\n\n")
     print(f"Message Content Size: {len(message)} | Message Content: '{message}'")
     
     if len(message) > MAX_LIMIT_TEXT:
@@ -96,12 +99,18 @@ def chat():
                 shutdown.join()
                 print(f"***** SYSTEM ADMIN: COMMAND CODE [{message}] ACCEPTED *****")
                 return "Override accepted. ChatBot terminated."
-        else:
-            print("Keycode matches failed")
 
     prompt = message
 
-    if queryMap[str(client)] >= MAX_QUERY_LIMIT:
+    if 'requests' not in session:
+        print(f"Initialized cache for {client}")
+
+    session['requests'] = queryMap[str(client)]
+
+    print(f"{session['requests']} requests during session for {client}")
+
+    if session['requests'] >= MAX_QUERY_LIMIT:
+            print("Session request limit hit")
             print("GPT--> ****[Sleep response posted]****")
             return "It's getting late, I'm going to go sleep 😴"
 
