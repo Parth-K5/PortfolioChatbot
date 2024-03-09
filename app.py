@@ -1,27 +1,25 @@
 from flask import Flask, render_template, request, jsonify, session, abort, redirect
-from transformers import AutoModelForCausalLM, AutoTokenizer
 import torch
-import logging
 import generation
 import threading
 import time
 import os
+from datetime import timedelta
 from uuid import uuid4
-
-
-tokenizer = AutoTokenizer.from_pretrained("microsoft/DialoGPT-small")
-model = AutoModelForCausalLM.from_pretrained("microsoft/DialoGPT-small")
-logging.getLogger('transformers').setLevel(logging.ERROR)
+import time
+import logging
 
 app = Flask(__name__)
-app.secret_key = "parthk5101x"
+app.secret_key = str(uuid4())
+app.permanent_session_lifetime = timedelta(minutes=5)
 
 MAX_LIMIT_TEXT = 50
-MAX_QUERY_LIMIT = 3
+MAX_QUERY_LIMIT = 10
 RECENT_UID = ""
 
 
 queryMap = {}
+conversations = {}
 #is_online = True
 
 def commence_shutdown():
@@ -29,15 +27,19 @@ def commence_shutdown():
     os._exit(0)
 
 
+
+
 @app.route("/")
 def home():
     global MAX_LIMIT_TEXT
     global MAX_QUERY_LIMIT
     global queryMap
+    global conversations
 
     MAX_LIMIT_TEXT = MAX_LIMIT_TEXT
     MAX_QUERY_LIMIT = MAX_QUERY_LIMIT
     queryMap = queryMap
+    conversations = conversations
 
     client = f"{request.remote_addr}"
     #client = f"{request.remote_addr}:{request.environ.get('REMOTE_PORT')}"
@@ -52,17 +54,17 @@ def home():
         session['cached-query-count'] = {}
         session['cached-query-count'][str(identifier)] = 0
         queryMap[str(identifier)] = 0
-        print(f"Registered {identifier} to {session['cached-query-count'][str(identifier)]}")
-    
+        conversations[str(identifier)] = []
+        print(f"Registered {identifier} under {request.remote_addr} to {session['cached-query-count'][str(identifier)]}")
+
     if 'chatHistory' not in session:
         session['chatHistory'] = {}
+        session['chatHistory']['log'] = []
         session['chatHistory']['lastRequest'] = ''
         session['chatHistory']['lastReply'] = ''
         print("Initialized chat history")
-
     #print(queryMap)
 
-    
     #if str(client) not in queryMap:
         #queryMap[str(client)] = 0
     return render_template('index.html')
@@ -73,12 +75,17 @@ def chat():
     global MAX_LIMIT_TEXT
     global MAX_QUERY_LIMIT
     global queryMap
+    global conversations
 
     MAX_LIMIT_TEXT = MAX_LIMIT_TEXT
     MAX_QUERY_LIMIT = MAX_QUERY_LIMIT
+    conversations = conversations
     queryMap = queryMap
 
-    identifier = list(session['cached-query-count'].keys())[0]
+    try:
+        identifier = list(session['cached-query-count'].keys())[0]
+    except KeyError:
+        return "Oops. The page needs to be reloaded"
     #print(f"Found cached identifier: {identifier}")
 
     client = f"{request.remote_addr}"
@@ -105,30 +112,44 @@ def chat():
         if message == keycode[:-1]:
             if keycodes.index(keycode) == 0:
                 queryMap[str(identifier)] = 0
+                session['chatHistory']['log'].clear()
                 session.clear()
+                for key in list(session.keys()):
+                    session.pop(key)
+
                 session.modified = True
                 print(f"***** SYSTEM ADMIN: COMMAND CODE [{message}] ACCEPTED *****")
                 return f"Override accepted. QueryMap for user {identifier}@{client} has been cleared. Reload the page."
             if keycodes.index(keycode) == 1:
                 queryMap.clear()
+                session['chatHistory']['log'].clear()
+                app.secret_key = str(uuid4())
                 session.clear()
+                for key in list(session.keys()):
+                    session.pop(key)
                 session.modified = True
                 print(f"***** SYSTEM ADMIN: COMMAND CODE [{message}] ACCEPTED *****")
                 return f"Override accepted. System variable QueryMap has been cleared. Reload the page."
             if keycodes.index(keycode) == 2:
                 queryMap[str(identifier)] = 0
+                session['chatHistory']['log'].clear()
                 session.clear()
+                for key in list(session.keys()):
+                    session.pop(key)
                 session.modified = True
                 MAX_QUERY_LIMIT = 999
                 print(f"***** SYSTEM ADMIN: COMMAND CODE [{message}] ACCEPTED *****")
                 return "Override accepted. QueryLimit set to unlimited. Reload the page"
             if keycodes.index(keycode) == 3:
                 queryMap[str(identifier)] = 0
-                MAX_QUERY_LIMIT = 3
+                MAX_QUERY_LIMIT = 10
+                session['chatHistory']['log'].clear()
                 session.clear()
+                for key in list(session.keys()):
+                    session.pop(key)
                 session.modified = True
                 print(f"***** SYSTEM ADMIN: COMMAND CODE [{message}] ACCEPTED *****")
-                return "Override accepted. QueryLimit reset to 3. Reload the page"
+                return "Override accepted. QueryLimit reset to 10. Reload the page"
             if keycodes.index(keycode) == 4:
                 print(f"***** SYSTEM ADMIN: COMMAND CODE [{message}] ACCEPTED *****")
                 shutdown = threading.Thread(target=commence_shutdown, name="Shutdown ChatBot")
@@ -148,22 +169,27 @@ def chat():
         return session['chatHistory']['lastReply']
 
     try:
-        response = generation.gpt_gen(prompt, MAX_LIMIT_TEXT)
-
+    #print("\n")
+        session['chatHistory']['log'].append({"role": "user", "content": prompt})
+        start_gen = time.perf_counter()
+        response = generation.gpt_gen(prompt, MAX_LIMIT_TEXT, session['chatHistory']['log'])
+        
         session['cached-query-count'][str(identifier)] += 1
         session['chatHistory']['lastRequest'] = prompt
         session['chatHistory']['lastReply'] = response
+        session['chatHistory']['log'].append({"role": "assistant", "content": response})
 
         print(f"{session['cached-query-count'][str(identifier)]} requests during session for {client}")
         queryMap[str(identifier)] += 1
         print(f"**** {str(client)} with UID: {identifier} has used up {queryMap[str(identifier)]}/{MAX_QUERY_LIMIT} queries ****")
 
         session.modified = True
-
+        
         return response
     except:
         print("**** Hit OpenAI Rate Limit ****")
+
         return "Uh oh I'm a little tired. Ask me something later"
     
 if __name__ == "__main__":
-    app.run()
+    Flask.run(app)

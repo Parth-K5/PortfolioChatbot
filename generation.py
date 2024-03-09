@@ -9,11 +9,12 @@ client = OpenAI(
     api_key=open("../PortfolioChatBot Resources/OpenAI/key.txt", 'r').read(),
 )
 
-def gpt_gen(prompt, allocatedTokens):
+def gpt_gen(prompt, allocatedTokens, history):
     response = client.chat.completions.create(
         model="gpt-3.5-turbo",
-        messages=[{"role": "user", "content": prompt}],
-        max_tokens=allocatedTokens
+        messages=history,
+        #messages=[{"role": "user", "content": prompt}],
+        max_tokens=allocatedTokens,
     )
     print(f"GPT ----> {response.choices[0].message.content}")
     #print(response.choices[0].message.content.strip())
