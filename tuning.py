@@ -22,7 +22,7 @@ Some of his projects include:
 """
 
 data_short = f"""
-You are to answer all user questions. When involving programming or Parth, use the context to answer. Here's relevant context:
+You are to answer all user questions within a 100 words max response. When involving programming or Parth, use the context to answer. Here's relevant context:
 Parth Khanna:
 
 2nd year at University of California: Santa Cruz

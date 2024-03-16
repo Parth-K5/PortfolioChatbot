@@ -29,8 +29,8 @@ class Trainer:
         )
         os.environ['OPENAI_API_KEY'] = open("../PortfolioChatBot Resources/OpenAI/key.txt", 'r').read()
 
-        self.loader = TextLoader("data/data.txt")
-        self.vectorindex = VectorstoreIndexCreator().from_loaders([self.loader])
+        #self.loader = TextLoader("data/data.txt")
+        #self.vectorindex = VectorstoreIndexCreator().from_loaders([self.loader])
 
         #self.initialize_adv()
 
