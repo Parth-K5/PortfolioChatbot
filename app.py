@@ -8,6 +8,7 @@ from datetime import timedelta
 from uuid import uuid4
 import time
 import logging
+import tuning
 
 app = Flask(__name__)
 app.secret_key = str(uuid4())
@@ -16,6 +17,8 @@ app.permanent_session_lifetime = timedelta(minutes=5)
 MAX_LIMIT_TEXT = 50
 MAX_QUERY_LIMIT = 10
 RECENT_UID = ""
+
+gen = generation.Trainer()
 
 
 queryMap = {}
@@ -59,7 +62,7 @@ def home():
 
     if 'chatHistory' not in session:
         session['chatHistory'] = {}
-        session['chatHistory']['log'] = []
+        session['chatHistory']['log'] = [{"role": "system", "content": tuning.data_short}]
         session['chatHistory']['lastRequest'] = ''
         session['chatHistory']['lastReply'] = ''
         print("Initialized chat history")
@@ -116,7 +119,6 @@ def chat():
                 session.clear()
                 for key in list(session.keys()):
                     session.pop(key)
-
                 session.modified = True
                 print(f"***** SYSTEM ADMIN: COMMAND CODE [{message}] ACCEPTED *****")
                 return f"Override accepted. QueryMap for user {identifier}@{client} has been cleared. Reload the page."
@@ -168,28 +170,28 @@ def chat():
         print("Duplicate request handled")
         return session['chatHistory']['lastReply']
 
-    try:
+    #try:
     #print("\n")
-        session['chatHistory']['log'].append({"role": "user", "content": prompt})
-        start_gen = time.perf_counter()
-        response = generation.gpt_gen(prompt, MAX_LIMIT_TEXT, session['chatHistory']['log'])
-        
-        session['cached-query-count'][str(identifier)] += 1
-        session['chatHistory']['lastRequest'] = prompt
-        session['chatHistory']['lastReply'] = response
-        session['chatHistory']['log'].append({"role": "assistant", "content": response})
+    session['chatHistory']['log'].append({"role": "user", "content": prompt})
+    start_gen = time.perf_counter()
+    response = gen.gpt_gen(prompt, MAX_LIMIT_TEXT, session['chatHistory']['log'])
+    
+    session['cached-query-count'][str(identifier)] += 1
+    session['chatHistory']['lastRequest'] = prompt
+    session['chatHistory']['lastReply'] = response
+    session['chatHistory']['log'].append({"role": "assistant", "content": response})
 
-        print(f"{session['cached-query-count'][str(identifier)]} requests during session for {client}")
-        queryMap[str(identifier)] += 1
-        print(f"**** {str(client)} with UID: {identifier} has used up {queryMap[str(identifier)]}/{MAX_QUERY_LIMIT} queries ****")
+    print(f"{session['cached-query-count'][str(identifier)]} requests during session for {client}")
+    queryMap[str(identifier)] += 1
+    print(f"**** {str(client)} with UID: {identifier} has used up {queryMap[str(identifier)]}/{MAX_QUERY_LIMIT} queries ****")
 
-        session.modified = True
-        
-        return response
-    except:
-        print("**** Hit OpenAI Rate Limit ****")
+    session.modified = True
+    
+    return response
+    #except:
+        #print("**** Hit OpenAI Rate Limit ****")
 
-        return "Uh oh I'm a little tired. Ask me something later"
+        #return "Uh oh I'm a little tired. Ask me something later"
     
 if __name__ == "__main__":
     Flask.run(app)

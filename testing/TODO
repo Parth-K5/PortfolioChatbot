@@ -1,0 +1,2 @@
+Upgrade to langchain integration within generation.py
+    -> Currently using chat_history instructions at the cost of about ~100 tokens per session
