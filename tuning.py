@@ -1,5 +1,6 @@
 import datetime
 import time
+import tiktoken
 
 links = {"resume": "[NOT UPLOADED YET]",
 "linkedin": "https://www.linkedin.com/in/parth-khanna-47870b25b/",
@@ -39,3 +40,10 @@ Personal Portfolio: Utilizes Javascript, React, HTML, CSS, and Three.js.
 '''dates = {
     currDate: time.ctime()
 }'''
+
+def count_tokens(text, model='cl100k_base'):
+    if model in tiktoken.list_encoding_names():
+        encoding = tiktoken.get_encoding(model)
+        return len(encoding.encode(text=text))
+    else:
+        return "Invalid Model Specified"

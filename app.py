@@ -16,6 +16,7 @@ app.permanent_session_lifetime = timedelta(minutes=5)
 
 MAX_LIMIT_TEXT = 50
 MAX_QUERY_LIMIT = 10
+TOKEN_COUNT = {}
 RECENT_UID = ""
 
 gen = generation.Trainer()
@@ -38,9 +39,11 @@ def home():
     global MAX_QUERY_LIMIT
     global queryMap
     global conversations
+    global TOKEN_COUNT
 
     MAX_LIMIT_TEXT = MAX_LIMIT_TEXT
     MAX_QUERY_LIMIT = MAX_QUERY_LIMIT
+    TOKEN_COUNT = TOKEN_COUNT
     queryMap = queryMap
     conversations = conversations
 
@@ -56,6 +59,7 @@ def home():
     if 'cached-query-count' not in session or len(queryMap) == 0:
         session['cached-query-count'] = {}
         session['cached-query-count'][str(identifier)] = 0
+        TOKEN_COUNT[str(identifier)] = 0
         queryMap[str(identifier)] = 0
         conversations[str(identifier)] = []
         print(f"Registered {identifier} under {request.remote_addr} to {session['cached-query-count'][str(identifier)]}")
@@ -65,7 +69,7 @@ def home():
         session['chatHistory']['log'] = [{"role": "system", "content": tuning.data_short}]
         session['chatHistory']['lastRequest'] = ''
         session['chatHistory']['lastReply'] = ''
-        print("Initialized chat history")
+        print(f"Initialized chat history with GPT parameters using ({tuning.count_tokens(tuning.data_short)}) tokens")
     #print(queryMap)
 
     #if str(client) not in queryMap:
@@ -78,10 +82,12 @@ def chat():
     global MAX_LIMIT_TEXT
     global MAX_QUERY_LIMIT
     global queryMap
+    global TOKEN_COUNT
     global conversations
 
     MAX_LIMIT_TEXT = MAX_LIMIT_TEXT
     MAX_QUERY_LIMIT = MAX_QUERY_LIMIT
+    TOKEN_COUNT = TOKEN_COUNT
     conversations = conversations
     queryMap = queryMap
 
@@ -175,19 +181,21 @@ def chat():
     session['chatHistory']['log'].append({"role": "user", "content": prompt})
     start_gen = time.perf_counter()
     response = gen.gpt_gen(prompt, MAX_LIMIT_TEXT, session['chatHistory']['log'])
+    print(f"GPT ({response[1]} tokens)--> {response[0]}")
     
     session['cached-query-count'][str(identifier)] += 1
     session['chatHistory']['lastRequest'] = prompt
-    session['chatHistory']['lastReply'] = response
-    session['chatHistory']['log'].append({"role": "assistant", "content": response})
+    session['chatHistory']['lastReply'] = response[0]
+    session['chatHistory']['log'].append({"role": "assistant", "content": response[0]})
 
     print(f"{session['cached-query-count'][str(identifier)]} requests during session for {client}")
     queryMap[str(identifier)] += 1
-    print(f"**** {str(client)} with UID: {identifier} has used up {queryMap[str(identifier)]}/{MAX_QUERY_LIMIT} queries ****")
+    TOKEN_COUNT[str(identifier)] += response[1]
+    print(f"**** {str(client)} with UID: {identifier} has used up {queryMap[str(identifier)]}/{MAX_QUERY_LIMIT} queries and {TOKEN_COUNT[str(identifier)]} tokens in the session.****")
 
     session.modified = True
     
-    return response
+    return response[0]
     #except:
         #print("**** Hit OpenAI Rate Limit ****")
 

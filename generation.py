@@ -69,7 +69,7 @@ class Trainer:
         )
         print(f"GPT ----> {response.choices[0].message.content}")
         #print(response.choices[0].message.content.strip())
-        return response.choices[0].message.content.strip()
+        return (response.choices[0].message.content.strip(), response.usage.completion_tokens)
     
     def personalized_gpt_gen(self, prompt, allocatedTokens, history):
         response = self.OPENAIClient.chat.completions.create(
