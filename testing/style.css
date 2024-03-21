@@ -1,19 +1,24 @@
-.chatbox {
-    position:absolute;
-    bottom: 0;
-    right: 0;
-    width: 70%;
-    height: 100%;
-    resize:both;
-    overflow: auto;
+.iframe-container {
+  width: 25%;
+  height: 60vh;
+  position: fixed;
+  top: 40%;
+  right: 10px;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 999;
 }
-
-.chat-iframe {
-    position: absolute;
-    bottom: 0;
-    right: 0;
-    width: 50%;
-    height: 50%;
-    resize:both;
-    overflow: auto;
+.iframe-container button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 1000;
+  color: white;
+}
+button {
+  background: #262BDC;
+  border-radius: 10px;
+  position: fixed;
+  top: 90%;
+  right: 10px;
+  padding: 20px;
 }

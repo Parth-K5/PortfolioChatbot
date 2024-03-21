@@ -1,15 +1,91 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <link rel="stylesheet" href="style.css">
-    </head>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/uuid/8.3.2/uuid.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
 <body>
+    <div id="chat-container">
+        <div id="chat-history"></div>
+        <input type="text" id="user-input" placeholder="Type your message...">
+        <button id="send-btn">Send</button>
+    </div>
 
-<h1>The embed element</h1>
+    <script>
+        // Define the URL of your Flask app
+        function uuidv4() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
 
-<div class="chatbox">
-    <iframe class="chat-iframe", style="text-align: right;", src="http://127.0.0.1:8000"></iframe>
-</div>
+        const flaskAppUrl = "http://127.0.0.1:8000"; // Update with your actual Flask app URL
+        let conversation = [];
 
+        // Function to generate a unique session ID or retrieve from localStorage
+        function getSessionId() {
+            let sessionId = localStorage.getItem('sessionId');
+            if (!sessionId) {
+                sessionId = uuidv4(); // Generate a new session ID if not found in localStorage
+                localStorage.setItem('sessionId', sessionId); // Store in localStorage
+            }
+            return sessionId;
+        }
+
+        const sessionId = getSessionId(); // Get or generate session ID
+        console.log("Session ID: ", sessionId)
+
+        // Function to display a message in the chat history
+        function displayMessage(role, content) {
+            const chatHistory = $("#chat-history");
+            chatHistory.append(`<div><strong>${role}:</strong> ${content}</div>`);
+        }
+
+        // Function to send user message to the Flask API
+        function sendMessage(message) {
+            $.ajax({
+                type: "POST",
+                url: `${flaskAppUrl}/api/send-message`,
+                contentType: "application/json",
+                data: JSON.stringify({ 
+                    message: message, 
+                    chatHistory: conversation,
+                    sessionId: sessionId // Include session ID with the request
+                }),
+                success: function(response) {
+                    console.log("Sent ", message)
+                    displayMessage("User", message);
+                    displayMessage("Bot", response.response);
+                    conversation.push({ role: "user", content: message });
+                    conversation.push({ role: "assistant", content: response.response });
+                },
+                error: function(xhr, status, error) {
+                    console.error("Error:", JSON.stringify(error));
+                    console.error("Status:", status);
+                    console.error("XHR:", xhr);
+                }
+            });
+        }
+
+        // Event listener for send button click
+        $("#send-btn").click(function() {
+            const userInput = $("#user-input").val();
+            if (userInput.trim() !== "") {
+                sendMessage(userInput);
+                $("#user-input").val(""); // Clear the input field after sending message
+            }
+        });
+
+        // Event listener for pressing Enter key
+        $("#user-input").keypress(function(event) {
+            if (event.which === 13) {
+                $("#send-btn").click();
+            }
+        });
+    </script>
 </body>
 </html>

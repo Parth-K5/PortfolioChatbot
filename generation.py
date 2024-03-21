@@ -71,6 +71,22 @@ class Trainer:
         #print(response.choices[0].message.content.strip())
         return (response.choices[0].message.content.strip(), response.usage.completion_tokens)
     
+    def gpt_gen_API(self, prompt, allocatedTokens, history):
+        if history == None:
+            history = [{'role': 'system', 'content': 'Answer questions that the user gives you'}]
+        history.append({'role': 'user', 'content': prompt})
+
+        print(f"Inputting: {history}")
+        response = self.OPENAIClient.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=history,
+            #messages=[{"role": "user", "content": prompt}],
+            max_tokens=allocatedTokens,
+        )
+        print(f"GPT ----> {response.choices[0].message.content}")
+        #print(response.choices[0].message.content.strip())
+        return (response.choices[0].message.content.strip(), response.usage.completion_tokens)
+    
     def personalized_gpt_gen(self, prompt, allocatedTokens, history):
         response = self.OPENAIClient.chat.completions.create(
             model="gpt-3.5-turbo",
