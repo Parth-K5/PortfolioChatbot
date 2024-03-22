@@ -74,7 +74,7 @@ def home():
     if 'chatHistory' not in session:
         session['chatHistory'] = {}
         session['chatHistory']['log'] = []
-        session['chatHistory']['log'] = [{"role": "system", "content": tuning.data_short}]
+        session['chatHistory']['log'] = []
         session['chatHistory']['lastRequest'] = ''
         session['chatHistory']['lastReply'] = ''
         print(f"Initialized chat history with GPT parameters using ({tuning.count_tokens(tuning.data_short)}) tokens")
@@ -98,7 +98,7 @@ def chat():
     TOKEN_COUNT = TOKEN_COUNT
     conversations = conversations
     queryMap = queryMap
-
+    
     try:
         identifier = list(session['cached-query-count'].keys())[0]
     except KeyError:
@@ -109,6 +109,9 @@ def chat():
     #client = f"{request.remote_addr}:{request.environ.get('REMOTE_PORT')}"
 
     message = request.form["msg"]
+
+    session['chatHistory']['log'] = [{"role": "system", "content": tuning.data_short}]
+    print("System context given to GPT")
 
     print("\n\n")
     print(f"Message Content Size: {len(message)} | Message Content: '{message}'")

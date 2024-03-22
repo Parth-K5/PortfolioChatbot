@@ -5,6 +5,8 @@ import tiktoken
 links = {"resume": "[NOT UPLOADED YET]",
 "linkedin": "https://www.linkedin.com/in/parth-khanna-47870b25b/",
 "email": "khanna.parth@outlook.com",
+"portfolio": "www.parthkhanna.me",
+"chatbot": "www.chatbot.parthkhanna.me"
 }
 
 data = f"""
@@ -26,14 +28,17 @@ data_short = f"""
 You are to answer all user questions within a 150 words max response. When involving programming or Parth, use the context to answer. Here's relevant context:
 Parth Khanna:
 
+Currently 19 years old
 2nd year at University of California: Santa Cruz
 Proficient in Python, C, Java, Javascript, CSS, Swift
 LinkedIn: {links['linkedin']}
 Email: {links['email']}
+Portfolio Website: {links['portfolio']}
 Projects:
-VexRobotics: Competitive robotics design pre-college
-Google Developers Club: Automates class schedules to Google Calendar via headless browser automation and Google APIs/services
-Personal Portfolio: Utilizes Javascript, React, HTML, CSS, and Three.js.
+VexRobotics: Competitive robotics design during high school. Built and programmed(RobotC) robot that was designed to find objects, pick them up, and retrieve them in competitions.
+Google Developers Club: Automates class schedules from MyUCSC to Google Calendar via headless browser automation and Google APIs/services. Currently a work in progress
+Personal Portfolio: Built on the foundation of Javascript, React, HTML, CSS and is elegantly tied together through the power of Three.js.
+ChatBot: Favorite project. Utilizes Flask, OpenAI, and API endpoints. Hosted on Amazon AWS services and found at {links['chatbot']}. API powers chatbot found on the portfolio website and accepts GET/POST requests.
 """
 
 
