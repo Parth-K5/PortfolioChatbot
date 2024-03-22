@@ -76,7 +76,7 @@ class Trainer:
             history = [{'role': 'system', 'content': 'Answer questions that the user gives you'}]
         history.append({'role': 'user', 'content': prompt})
 
-        print(f"Inputting: {history}")
+        #print(f"Inputting: {history}")
         response = self.OPENAIClient.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=history,

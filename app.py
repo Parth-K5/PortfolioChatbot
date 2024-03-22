@@ -210,15 +210,19 @@ def chat():
         #return "Uh oh I'm a little tired. Ask me something later"
 
 API_SESSIONS = {}
+API_USAGE = {}
 
 @cross_origin()
 @app.route("/api/send-message", methods=['POST'])
 def send_message_api():
 
     global API_SESSIONS
-    API_SESSIONS = API_SESSIONS
     global MAX_QUERY_LIMIT
+    global API_USAGE
+
+    API_SESSIONS = API_SESSIONS
     MAX_QUERY_LIMIT = MAX_QUERY_LIMIT
+    API_USAGE = API_USAGE
 
     session_id = request.json.get('sessionId') or str(uuid4())
 
@@ -229,7 +233,9 @@ def send_message_api():
     if str(session_id) not in API_SESSIONS:
         session['api_calls'] = session.get('api_calls', 0)
         API_SESSIONS[str(session_id)] = session['api_calls']
+        API_USAGE[str(session_id)] = 0
         print(f"Initialized new API source with ID: {session_id}")
+
     else:
         session['api_calls'] = API_SESSIONS[str(session_id)]
 
@@ -243,7 +249,8 @@ def send_message_api():
         return jsonify({'error': f'Message length exceeds {MAX_LIMIT_TEXT} character limit'}), 400
 
     chatHistory = request.json.get('chatHistory')
-    chatHistory.insert(0, [{"role": "system", "content": tuning.data_short}])
+
+    chatHistory.insert(0, {"role": "system", "content": tuning.data_short})
     print(f"Received following chat_history: {chatHistory}")
     if message:
         # Process the message using your chatbot logic
@@ -275,6 +282,8 @@ def send_message_api():
                     print(f"***** SYSTEM ADMIN: COMMAND CODE [{message}] ACCEPTED *****")
                     return jsonify({'session_id': session_id, 'api_calls': session['api_calls'], 'response': "Override accepted. QueryLimit reset to 10. Reload the page"})
                 if keycodes.index(keycode) == 4:
+                    metrics = f"UID: {str(session_id)} has used up {API_SESSIONS(str(session_id))} API requests and {API_USAGE[str(session_id)]} tokens"
+                if keycodes.index(keycode) == 5:
                     print(f"***** SYSTEM ADMIN: COMMAND CODE [{message}] ACCEPTED *****")
                     shutdown = threading.Thread(target=commence_shutdown, name="Shutdown ChatBot")
                     shutdown.start()
@@ -287,7 +296,8 @@ def send_message_api():
         response = gen.gpt_gen_API(message, MAX_LIMIT_TEXT, chatHistory)
         API_SESSIONS[str(session_id)] += 1
         session['session_id'] = session_id  # Update session ID
-        print(f"ID: {session_id} has made {session['api_calls']} requests using the API")
+        print(f"ID: {session_id} has made {API_SESSIONS[str(session_id)]} requests using the API totaling {response[1]} tokens")
+        API_USAGE[str(session_id)] = response[1]
         return jsonify({'session_id': session_id, 'api_calls': session['api_calls'], 'response': response[0]})
     else:
         return jsonify({'error': 'Message not provided'}), 400
