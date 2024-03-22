@@ -21,7 +21,7 @@ app.permanent_session_lifetime = timedelta(minutes=5)
 app.config['SESSION_TYPE'] = 'filesystem'
 app.config['SECRET_KEY'] = app.secret_key
 
-MAX_LIMIT_TEXT = 150
+MAX_LIMIT_TEXT = 600
 MAX_QUERY_LIMIT = 10
 TOKEN_COUNT = {}
 RECENT_UID = ""
@@ -245,8 +245,8 @@ def send_message_api():
     message = request.json.get('message')
     chat_history = request.json.get('chatHistory')
     print(f"Received API request from user {session['session_id']} | Message: {message} ({len(message)})")
-    if len(message) > MAX_LIMIT_TEXT:
-        return jsonify({'error': f'Message length exceeds {MAX_LIMIT_TEXT} character limit'}), 400
+    if len(message) > 50:
+        return jsonify({'error': f'ChatBot has been tampered with. Please reload the page.'}), 400
 
     chatHistory = request.json.get('chatHistory')
 
@@ -275,12 +275,12 @@ def send_message_api():
                 if keycodes.index(keycode) == 2:
                     MAX_QUERY_LIMIT = 999
                     print(f"***** SYSTEM ADMIN: COMMAND CODE [{message}] ACCEPTED *****")
-                    return jsonify({'session_id': session_id, 'api_calls': session['api_calls'], 'response': "Override accepted. QueryLimit set to unlimited. Reload the page"})
+                    return jsonify({'session_id': session_id, 'api_calls': session['api_calls'], 'response': "Override accepted. APILimit set to unlimited. Reload the page"})
                 if keycodes.index(keycode) == 3:
                     MAX_QUERY_LIMIT = 10
                     session.modified = True
                     print(f"***** SYSTEM ADMIN: COMMAND CODE [{message}] ACCEPTED *****")
-                    return jsonify({'session_id': session_id, 'api_calls': session['api_calls'], 'response': "Override accepted. QueryLimit reset to 10. Reload the page"})
+                    return jsonify({'session_id': session_id, 'api_calls': session['api_calls'], 'response': "Override accepted. APILimit reset to 10. Reload the page"})
                 if keycodes.index(keycode) == 4:
                     metrics = f"UID: {str(session_id)} has used up {API_SESSIONS[str(session_id)]} API requests and {API_USAGE[str(session_id)]} tokens."
                     return jsonify({'session_id': session_id, 'api_calls': session['api_calls'], 'response': metrics})
