@@ -282,7 +282,8 @@ def send_message_api():
                     print(f"***** SYSTEM ADMIN: COMMAND CODE [{message}] ACCEPTED *****")
                     return jsonify({'session_id': session_id, 'api_calls': session['api_calls'], 'response': "Override accepted. QueryLimit reset to 10. Reload the page"})
                 if keycodes.index(keycode) == 4:
-                    metrics = f"UID: {str(session_id)} has used up {API_SESSIONS(str(session_id))} API requests and {API_USAGE[str(session_id)]} tokens"
+                    metrics = f"UID: {str(session_id)} has used up {API_SESSIONS[str(session_id)]} API requests and {API_USAGE[str(session_id)]} tokens."
+                    return jsonify({'session_id': session_id, 'api_calls': session['api_calls'], 'response': metrics})
                 if keycodes.index(keycode) == 5:
                     print(f"***** SYSTEM ADMIN: COMMAND CODE [{message}] ACCEPTED *****")
                     shutdown = threading.Thread(target=commence_shutdown, name="Shutdown ChatBot")
