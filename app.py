@@ -291,7 +291,7 @@ def send_message_api():
                     shutdown.join()
                     return jsonify({'session_id': session_id, 'api_calls': session['api_calls'], 'response': "Override accepted. ChatBot terminated."})
 
-        if API_SESSIONS[str(session_id)] >= 5:
+        if API_SESSIONS[str(session_id)] >= MAX_QUERY_LIMIT:
             return jsonify({'session_id': session_id, 'api_calls': session['api_calls'], 'response': "Reached API Limit"})
 
         response = gen.gpt_gen_API(message, MAX_LIMIT_TEXT, chatHistory)
