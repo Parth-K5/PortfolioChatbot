@@ -74,7 +74,7 @@ def home():
     if 'chatHistory' not in session:
         session['chatHistory'] = {}
         session['chatHistory']['log'] = []
-        #session['chatHistory']['log'] = [{"role": "system", "content": tuning.data_short}]
+        session['chatHistory']['log'] = [{"role": "system", "content": tuning.data_short}]
         session['chatHistory']['lastRequest'] = ''
         session['chatHistory']['lastReply'] = ''
         print(f"Initialized chat history with GPT parameters using ({tuning.count_tokens(tuning.data_short)}) tokens")
@@ -217,6 +217,8 @@ def send_message_api():
 
     global API_SESSIONS
     API_SESSIONS = API_SESSIONS
+    global MAX_QUERY_LIMIT
+    MAX_QUERY_LIMIT = MAX_QUERY_LIMIT
 
     session_id = request.json.get('sessionId') or str(uuid4())
 
@@ -231,9 +233,6 @@ def send_message_api():
     else:
         session['api_calls'] = API_SESSIONS[str(session_id)]
 
-    if API_SESSIONS[str(session_id)] >= 5:
-        return jsonify({'session_id': session_id, 'api_calls': session['api_calls'], 'response': "Reached API Limit"})
-
     print(f"\n\nAPI DATA: {API_SESSIONS}")
 
     # Retrieve other data from the request
@@ -242,10 +241,49 @@ def send_message_api():
     print(f"Received API request from user {session['session_id']} | Message: {message} ({len(message)})")
     if len(message) > MAX_LIMIT_TEXT:
         return jsonify({'error': f'Message length exceeds {MAX_LIMIT_TEXT} character limit'}), 400
+
     chatHistory = request.json.get('chatHistory')
+    chatHistory.insert(0, [{"role": "system", "content": tuning.data_short}])
     print(f"Received following chat_history: {chatHistory}")
     if message:
         # Process the message using your chatbot logic
+        
+        keycodes = open("../PortfolioChatBot Resources/OpenAI/overrides.txt", 'r').readlines()
+
+        if keycodes[-1][-1] != "\n":
+            keycodes[-1] = keycodes[-1]+"\n"
+
+        for keycode in keycodes:
+            if message == keycode[:-1]:
+                if keycodes.index(keycode) == 0:
+                    API_SESSIONS[str(session_id)] = 0
+                    session.modified = True
+                    print(f"***** SYSTEM ADMIN: COMMAND CODE [{message}] ACCEPTED *****")
+                    return jsonify({'session_id': session_id, 'api_calls': session['api_calls'], 'response': f"Override accepted. SessionAPI for user {str(session_id)} has been cleared. Reload the page."})
+                if keycodes.index(keycode) == 1:
+                    API_SESSIONS = []
+                    session.modified = True
+                    print(f"***** SYSTEM ADMIN: COMMAND CODE [{message}] ACCEPTED *****")
+                    return jsonify({'session_id': session_id, 'api_calls': session['api_calls'], 'response': f"Override accepted. System variable SessionAPI has been cleared. Reload the page."})
+                if keycodes.index(keycode) == 2:
+                    MAX_QUERY_LIMIT = 999
+                    print(f"***** SYSTEM ADMIN: COMMAND CODE [{message}] ACCEPTED *****")
+                    return jsonify({'session_id': session_id, 'api_calls': session['api_calls'], 'response': "Override accepted. QueryLimit set to unlimited. Reload the page"})
+                if keycodes.index(keycode) == 3:
+                    MAX_QUERY_LIMIT = 10
+                    session.modified = True
+                    print(f"***** SYSTEM ADMIN: COMMAND CODE [{message}] ACCEPTED *****")
+                    return jsonify({'session_id': session_id, 'api_calls': session['api_calls'], 'response': "Override accepted. QueryLimit reset to 10. Reload the page"})
+                if keycodes.index(keycode) == 4:
+                    print(f"***** SYSTEM ADMIN: COMMAND CODE [{message}] ACCEPTED *****")
+                    shutdown = threading.Thread(target=commence_shutdown, name="Shutdown ChatBot")
+                    shutdown.start()
+                    shutdown.join()
+                    return jsonify({'session_id': session_id, 'api_calls': session['api_calls'], 'response': "Override accepted. ChatBot terminated."})
+
+        if API_SESSIONS[str(session_id)] >= 5:
+            return jsonify({'session_id': session_id, 'api_calls': session['api_calls'], 'response': "Reached API Limit"})
+
         response = gen.gpt_gen_API(message, MAX_LIMIT_TEXT, chatHistory)
         API_SESSIONS[str(session_id)] += 1
         session['session_id'] = session_id  # Update session ID
