@@ -21,7 +21,7 @@ app.permanent_session_lifetime = timedelta(minutes=5)
 app.config['SESSION_TYPE'] = 'filesystem'
 app.config['SECRET_KEY'] = app.secret_key
 
-MAX_LIMIT_TEXT = 50
+MAX_LIMIT_TEXT = 150
 MAX_QUERY_LIMIT = 10
 TOKEN_COUNT = {}
 RECENT_UID = ""
@@ -298,7 +298,7 @@ def send_message_api():
         API_SESSIONS[str(session_id)] += 1
         session['session_id'] = session_id  # Update session ID
         print(f"ID: {session_id} has made {API_SESSIONS[str(session_id)]} requests using the API totaling {response[1]} tokens")
-        API_USAGE[str(session_id)] = response[1]
+        API_USAGE[str(session_id)] += response[1]
         return jsonify({'session_id': session_id, 'api_calls': session['api_calls'], 'response': response[0]})
     else:
         return jsonify({'error': 'Message not provided'}), 400
