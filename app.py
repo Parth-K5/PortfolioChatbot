@@ -77,7 +77,6 @@ def home():
         session['chatHistory']['log'] = []
         session['chatHistory']['lastRequest'] = ''
         session['chatHistory']['lastReply'] = ''
-        print(f"Initialized chat history with GPT parameters using ({tuning.count_tokens(tuning.data_short)}) tokens")
     #print(queryMap)
 
     #if str(client) not in queryMap:
@@ -112,6 +111,7 @@ def chat():
 
     session['chatHistory']['log'] = [{"role": "system", "content": tuning.data_short}]
     print("System context given to GPT")
+    print(f"Initialized chat history with GPT parameters using ({tuning.count_tokens(tuning.data_short)}) tokens")
 
     print("\n\n")
     print(f"Message Content Size: {len(message)} | Message Content: '{message}'")

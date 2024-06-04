@@ -61,12 +61,15 @@ class Trainer:
         self.memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
 
     def gpt_gen(self, prompt, allocatedTokens, history):
-        response = self.OPENAIClient.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=history,
-            #messages=[{"role": "user", "content": prompt}],
-            max_tokens=allocatedTokens,
-        )
+        try:
+            response = self.OPENAIClient.chat.completions.create(
+                model="gpt-4o",
+                #model="gpt-3.5-turbo",
+                messages=history,
+                max_tokens=allocatedTokens,
+            )
+        except:
+            return ("Uh oh. Something went wrong. Please contact developer", 0)
         print(f"GPT ----> {response.choices[0].message.content}")
         #print(response.choices[0].message.content.strip())
         return (response.choices[0].message.content.strip(), response.usage.completion_tokens)
@@ -78,7 +81,8 @@ class Trainer:
 
         #print(f"Inputting: {history}")
         response = self.OPENAIClient.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model="gpt-4o",
+            #model="gpt-3.5-turbo",
             messages=history,
             #messages=[{"role": "user", "content": prompt}],
             max_tokens=allocatedTokens,
