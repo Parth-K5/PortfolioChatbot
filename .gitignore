@@ -1,3 +1,6 @@
 *.ipynb
 *.pyc
 *.DS_STORE
+flask_session
+settings.json
+__pycache__
