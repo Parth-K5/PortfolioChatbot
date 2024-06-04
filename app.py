@@ -109,9 +109,12 @@ def chat():
 
     message = request.form["msg"]
 
-    session['chatHistory']['log'] = [{"role": "system", "content": tuning.data_short}]
-    print("System context given to GPT")
-    print(f"Initialized chat history with GPT parameters using ({tuning.count_tokens(tuning.data_short)}) tokens")
+    if not session['chatHistory']['log']:
+        session['chatHistory']['log'] = [{"role": "system", "content": tuning.data_short}]
+        print("System context given to GPT")
+        print(f"Initialized chat history with GPT parameters using ({tuning.count_tokens(tuning.data_short)}) tokens")
+    else:
+        print("Found existing context from previous replies")
 
     print("\n\n")
     print(f"Message Content Size: {len(message)} | Message Content: '{message}'")
@@ -175,6 +178,10 @@ def chat():
                 shutdown.start()
                 shutdown.join()
                 return "Override accepted. ChatBot terminated."
+            if keycodes.index(keycode) == 5:
+                print(f"SYSTEM ADMIN: COMMAND CODE [{message}] ACCEPTED *****")
+                return f"You have {MAX_QUERY_LIMIT-session['cached-query-count'][str(identifier)]} queries left out of the {MAX_QUERY_LIMIT} total set"
+
 
     prompt = message
 
@@ -285,21 +292,21 @@ def send_message_api():
                     print(f"***** SYSTEM ADMIN: COMMAND CODE [{message}] ACCEPTED *****")
                     return jsonify({'session_id': session_id, 'api_calls': session['api_calls'], 'response': "Override accepted. APILimit reset to 10. Reload the page"})
                 if keycodes.index(keycode) == 4:
-                    metrics = f"UID: {str(session_id)} has used up {API_SESSIONS[str(session_id)]} API requests and {API_USAGE[str(session_id)]} tokens."
-                    return jsonify({'session_id': session_id, 'api_calls': session['api_calls'], 'response': metrics})
-                if keycodes.index(keycode) == 5:
                     print(f"***** SYSTEM ADMIN: COMMAND CODE [{message}] ACCEPTED *****")
                     shutdown = threading.Thread(target=commence_shutdown, name="Shutdown ChatBot")
                     shutdown.start()
                     shutdown.join()
                     return jsonify({'session_id': session_id, 'api_calls': session['api_calls'], 'response': "Override accepted. ChatBot terminated."})
+                if keycodes.index(keycode) == 5:
+                    metrics = f"UID: {str(session_id)} has used up {API_SESSIONS[str(session_id)]} API requests and {API_USAGE[str(session_id)]} tokens."
+                    return jsonify({'session_id': session_id, 'api_calls': session['api_calls'], 'response': metrics})
 
         if API_SESSIONS[str(session_id)] >= MAX_QUERY_LIMIT:
             return jsonify({'session_id': session_id, 'api_calls': session['api_calls'], 'response': "Reached API Limit"})
 
         response = gen.gpt_gen_API(message, MAX_LIMIT_TEXT, chatHistory)
         API_SESSIONS[str(session_id)] += 1
-        session['session_id'] = session_id  # Update session ID
+        session['session_id'] = session_id 
         print(f"ID: {session_id} has made {API_SESSIONS[str(session_id)]} requests using the API totaling {response[1]} tokens")
         API_USAGE[str(session_id)] += response[1]
         return jsonify({'session_id': session_id, 'api_calls': session['api_calls'], 'response': response[0]})
