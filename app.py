@@ -255,12 +255,12 @@ def send_message_api():
     message = request.json.get('message')
     chat_history = request.json.get('chatHistory')
     print(f"Received API request from user {session['session_id']} | Message: {message} ({len(message)})")
-    if len(message) > 50:
+    if len(message) > 100:
         return jsonify({'error': f'ChatBot has been tampered with. Please reload the page.'}), 400
 
     chatHistory = request.json.get('chatHistory')
-
-    chatHistory.insert(0, {"role": "system", "content": tuning.data_short})
+    if not chatHistory or chatHistory == []:
+        chatHistory.insert(0, {"role": "system", "content": tuning.data_short})
     print(f"Received following chat_history: {chatHistory}")
     if message:
         # Process the message using your chatbot logic
