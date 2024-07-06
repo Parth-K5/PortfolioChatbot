@@ -221,6 +221,7 @@ def chat():
 
 API_SESSIONS = {}
 API_USAGE = {}
+HARD_API_MESSAGE_LIM = 100
 
 @cross_origin()
 @app.route("/api/send-message", methods=['POST'])
@@ -229,10 +230,12 @@ def send_message_api():
     global API_SESSIONS
     global MAX_QUERY_LIMIT
     global API_USAGE
+    global HARD_API_MESSAGE_LIM
 
     API_SESSIONS = API_SESSIONS
     MAX_QUERY_LIMIT = MAX_QUERY_LIMIT
     API_USAGE = API_USAGE
+    HARD_API_MESSAGE_LIM = HARD_API_MESSAGE_LIM
 
     session_id = request.json.get('sessionId') or str(uuid4())
 
@@ -255,8 +258,9 @@ def send_message_api():
     message = request.json.get('message')
     chat_history = request.json.get('chatHistory')
     print(f"Received API request from user {session['session_id']} | Message: {message} ({len(message)})")
-    if len(message) > 100:
-        return jsonify({'error': f'ChatBot has been tampered with. Please reload the page.'}), 400
+    if len(message) > HARD_API_MESSAGE_LIM:
+        return jsonify({'session_id': session_id, 'api_calls': session['api_calls'], 'response': f"Error: Message length too long. {len(message)}/{HARD_API_MESSAGE_LIM}"})
+        #return jsonify({'error': f'ChatBot has been tampered with. Please reload the page.'})
 
     chatHistory = request.json.get('chatHistory')
     if not chatHistory or chatHistory == []:
